@@ -35,12 +35,15 @@ function samePdf(href) {
   }
 }
 
-function fileName(url) {
+/** The link text when it names the file, else the file name without FoF Upload's timestamp prefix. */
+function fileName(a, url) {
+  const text = a.textContent.trim();
+  if (/\.pdf$/i.test(text) && !text.includes('/')) return text;
+  let name = url.pathname.split('/').pop();
   try {
-    return decodeURIComponent(url.pathname.split('/').pop());
-  } catch {
-    return url.pathname.split('/').pop();
-  }
+    name = decodeURIComponent(name);
+  } catch {}
+  return name.replace(/^\d{9,}-\d+-(?=.)/, '');
 }
 
 /** Finds the PDFs in one post and adds the View buttons. Safe to run on every redraw. */
@@ -120,7 +123,7 @@ function enhance(post) {
     if (!canDownload && app.forum.attribute('fof-upload.canDownload') !== undefined && url.pathname.includes('/assets/files/')) return;
     add(
       a,
-      { url: url.href, name: fileName(url) },
+      { url: url.href, name: fileName(a, url) },
       {
         className: 'Button--icon Button--link LecternLink-view',
         text: false,

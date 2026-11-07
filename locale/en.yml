@@ -3,7 +3,7 @@ ernestdefoe-lectern:
     enabled_label: Show PDFs in posts
     enabled_help: Adds a View button to PDF files in posts. Turn it off to leave every PDF as a normal link.
     mode_label: Open PDFs
-    mode_help: In the post opens the viewer under the file, and phones still get the full screen. Full screen covers the page.
+    mode_help: Full screen covers the page. In the post opens the viewer under the file. Phones always get full screen.
     mode:
       modal: Full screen
       inline: In the post
