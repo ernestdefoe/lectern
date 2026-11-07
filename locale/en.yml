@@ -11,7 +11,7 @@ ernestdefoe-lectern:
     fof_upload_help: "With FoF Upload, PDFs work out of the box: their download buttons get a View button. For a card with the file name and size, open FoF Upload's settings and use the PDF viewer template for application/pdf."
     template:
       name: PDF viewer (Lectern)
-      description: Shows the PDF as a card with its name and size, a View button that opens it in the post, and a download button.
+      description: Shows the PDF as a card with its name and size, a View button that opens the viewer, and a download button.
 
   forum:
     view: View
