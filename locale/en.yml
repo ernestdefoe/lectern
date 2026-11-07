@@ -1,0 +1,54 @@
+ernestdefoe-lectern:
+  admin:
+    enabled_label: Show PDFs in posts
+    enabled_help: Adds a View button to PDF files in posts. Turn it off to leave every PDF as a normal link.
+    mode_label: Open PDFs
+    mode_help: In the post opens the viewer under the file, and phones still get the full screen. Full screen covers the page.
+    mode:
+      modal: Full screen
+      inline: In the post
+    permission: View PDFs in posts
+    fof_upload_help: "With FoF Upload, PDFs work out of the box: their download buttons get a View button. For a card with the file name and size, open FoF Upload's settings and use the PDF viewer template for application/pdf."
+    template:
+      name: PDF viewer (Lectern)
+      description: Shows the PDF as a card with its name and size, a View button that opens it in the post, and a download button.
+
+  forum:
+    view: View
+    view_file: "View {name}"
+    hide: Close viewer
+    download: Download
+    title: "PDF viewer: {name}"
+    loading: Loading PDF…
+    loading_percent: "Loading PDF… {percent}%"
+    error_open: This PDF could not be opened.
+    error_denied: You don't have permission to view this file.
+    error_missing: This file could not be found.
+    error_password: This PDF is password protected. Download it to open it.
+    error_browser: Your browser can't show PDFs here. Download the file instead.
+    pages_label: Pages
+    page_label: "Page {number}"
+    page_of: "Page {number} of {total}"
+    page_input: Page number
+    of_total: "of {total}"
+    previous_page: Previous page
+    next_page: Next page
+    zoom_in: Zoom in
+    zoom_out: Zoom out
+    fit_width: Fit to width
+    zoom_level: "Zoom {percent}%"
+    thumbnails: Show page thumbnails
+    hide_thumbnails: Hide page thumbnails
+    search: Search
+    search_placeholder: Search this PDF
+    search_previous: Previous match
+    search_next: Next match
+    search_count: "{current} of {total}"
+    search_none: No matches
+    print: Print
+    preparing_print: "Preparing to print… {done} of {total}"
+    full_screen: Full screen
+    exit_full_screen: Exit full screen
+    close: Close
+    toolbar: PDF tools
+    document: "{name}, PDF document"
