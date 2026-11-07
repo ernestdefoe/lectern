@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import Icon from 'flarum/common/components/Icon';
-import { loadPdfjs, fetchPdf, openDocument } from './pdfjs';
+import { loadPdfjs, fetchFile, openDocument } from './pdfjs';
 
 const t = (key, params) => app.translator.trans('ernestdefoe-lectern.forum.' + key, params, true);
 
@@ -115,7 +115,7 @@ export default class Viewer extends Component {
     try {
       const [lib, bytes] = await Promise.all([
         loadPdfjs(),
-        fetchPdf(this.attrs.url, this.abort.signal, (p) => {
+        fetchFile(this.attrs.url, this.abort.signal, (p) => {
           this.progress = p;
           m.redraw();
         }),

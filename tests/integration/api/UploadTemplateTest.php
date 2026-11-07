@@ -50,7 +50,7 @@ class UploadTemplateTest extends TestCase
             'authenticatedAs' => 2,
             'json' => ['data' => [
                 'type' => 'posts',
-                'attributes' => ['content' => '[upl-lectern uuid=0b9e5c1a-1111-4c4c-9999-123456789abc size=1.2MB]<b>Owner\'s</b> manual.pdf[/upl-lectern]'],
+                'attributes' => ['content' => '[upl-lectern uuid=0b9e5c1a-1111-4c4c-9999-123456789abc size=1.2MB pages=12]<b>Owner\'s</b> manual.pdf[/upl-lectern]'],
                 'relationships' => ['discussion' => ['data' => ['type' => 'discussions', 'id' => '1']]],
             ]],
         ]));
@@ -61,6 +61,8 @@ class UploadTemplateTest extends TestCase
         $this->assertStringContainsString('class="LecternCard" data-lectern-uuid="0b9e5c1a-1111-4c4c-9999-123456789abc"', $html);
         $this->assertStringContainsString('data-fof-upload-download-uuid="0b9e5c1a-1111-4c4c-9999-123456789abc"', $html);
         $this->assertStringContainsString('1.2MB', $html);
+        $this->assertStringContainsString('data-lectern-pages="12"', $html);
+        $this->assertStringNotContainsString('data-lectern-sheets', $html, 'A count that is not given is left out');
         $this->assertStringContainsString('&lt;b&gt;Owner\'s&lt;/b&gt; manual.pdf', $html, 'The file name is text, never markup');
         $this->assertStringNotContainsString('<b>', $html);
     }

@@ -10,11 +10,13 @@
   },
   "devDependencies": {
     "@flarum/prettier-config": "^1.0.0",
+    "docx-preview": "^0.4.1",
     "flarum-webpack-config": "^3.1.0",
     "pdfjs-dist": "6.4.299",
     "prettier": "^3.9.10",
     "webpack": "^5.0.0",
-    "webpack-cli": "^7.2.3"
+    "webpack-cli": "^7.2.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "prettier": "@flarum/prettier-config"
 }

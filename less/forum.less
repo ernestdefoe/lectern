@@ -14,8 +14,18 @@
 }
 .Post-body .LecternCard-icon {
   font-size: 26px;
-  color: #c2410c;
+  color: var(--muted-color);
   flex-shrink: 0;
+}
+// Each type in its own colour, mid tones that read on light and dark.
+.Post-body .LecternCard--pdf .LecternCard-icon {
+  color: #c2410c;
+}
+.Post-body .LecternCard--word .LecternCard-icon {
+  color: #3b6fc4;
+}
+.Post-body .LecternCard--sheet .LecternCard-icon {
+  color: #2e8b57;
 }
 .Post-body .LecternCard-info {
   display: flex;

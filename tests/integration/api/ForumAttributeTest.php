@@ -37,6 +37,9 @@ class ForumAttributeTest extends TestCase
     {
         $this->assertSame('modal', $this->mode());
         $this->assertSame('modal', $this->mode(2));
+
+        $types = json_decode((string) $this->send($this->request('GET', '/api'))->getBody(), true)['data']['attributes']['lecternTypes'];
+        $this->assertSame(['pdf', 'word', 'sheet'], $types, 'Every file type is on out of the box');
     }
 
     #[Test]
@@ -62,6 +65,15 @@ class ForumAttributeTest extends TestCase
 
         $this->assertNull($this->mode());
         $this->assertNull($this->mode(1));
+    }
+
+    #[Test]
+    public function a_file_type_the_admin_turns_off_is_left_out()
+    {
+        $types = fn () => json_decode((string) $this->send($this->request('GET', '/api'))->getBody(), true)['data']['attributes']['lecternTypes'];
+
+        $this->setting('ernestdefoe-lectern.word', '0');
+        $this->assertSame(['pdf', 'sheet'], $types());
     }
 
     #[Test]

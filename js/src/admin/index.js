@@ -12,6 +12,15 @@ app.initializers.add('ernestdefoe-lectern', () => {
       help: t('enabled_help'),
       default: true,
     })
+    .registerSetting(() => (
+      <div className="Form-group">
+        <label>{t('types_label')}</label>
+        <div className="helpText">{t('types_help')}</div>
+      </div>
+    ))
+    .registerSetting({ setting: 'ernestdefoe-lectern.pdf', type: 'boolean', label: t('type_pdf'), default: true })
+    .registerSetting({ setting: 'ernestdefoe-lectern.word', type: 'boolean', label: t('type_word'), default: true })
+    .registerSetting({ setting: 'ernestdefoe-lectern.sheets', type: 'boolean', label: t('type_sheets'), default: true })
     .registerSetting({
       setting: 'ernestdefoe-lectern.mode',
       type: 'select',

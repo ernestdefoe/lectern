@@ -22,7 +22,7 @@ export function loadPdfjs() {
 }
 
 /** Downloads the file with the reader's own session, reporting progress as it goes. */
-export async function fetchPdf(url, signal, onProgress) {
+export async function fetchFile(url, signal, onProgress) {
   const response = await fetch(url, { credentials: 'same-origin', signal });
 
   if (!response.ok) {

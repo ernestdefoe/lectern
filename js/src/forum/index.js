@@ -3,10 +3,19 @@ import { extend } from 'flarum/common/extend';
 import CommentPost from 'flarum/forum/components/CommentPost';
 
 /*
- * This file is all a page without an open PDF pays for: it finds the PDFs in a
- * post and gives each a View button. The viewer and pdf.js load on the first
- * click.
+ * This file is all a page without an open document pays for: it finds the
+ * PDFs, Word files and spreadsheets in a post and gives each a View button.
+ * The viewers and their libraries load on the first click.
  */
+
+const KINDS = { pdf: 'pdf', docx: 'word', xlsx: 'sheet', xlsm: 'sheet', xls: 'sheet', ods: 'sheet', csv: 'sheet' };
+const ICONS = { pdf: 'fa-file-pdf', word: 'fa-file-word', sheet: 'fa-file-excel' };
+
+/** 'pdf', 'word' or 'sheet' for a file name this forum lets readers open, else undefined. */
+function kindOf(name) {
+  const kind = KINDS[(/\.([a-z0-9]+)$/i.exec(name.trim()) || [])[1]?.toLowerCase()];
+  return kind && (app.forum.attribute('lecternTypes') || []).includes(kind) ? kind : undefined;
+}
 
 const t = (key, params) => app.translator.trans('ernestdefoe-lectern.forum.' + key, params, true);
 
@@ -25,11 +34,11 @@ function button(className, label, text) {
   return el;
 }
 
-/** A link to a PDF on this forum, or null. */
-function samePdf(href) {
+/** A link to a document on this forum, or null. */
+function sameOrigin(href) {
   try {
     const url = new URL(href, location.href);
-    return url.origin === location.origin && /\.pdf$/i.test(url.pathname) ? url : null;
+    return url.origin === location.origin && kindOf(url.pathname) ? url : null;
   } catch {
     return null;
   }
@@ -38,7 +47,7 @@ function samePdf(href) {
 /** The link text when it names the file, else the file name without FoF Upload's timestamp prefix. */
 function fileName(a, url) {
   const text = a.textContent.trim();
-  if (/\.pdf$/i.test(text) && !text.includes('/')) return text;
+  if (kindOf(text) && !text.includes('/')) return text;
   let name = url.pathname.split('/').pop();
   try {
     name = decodeURIComponent(name);
@@ -46,7 +55,7 @@ function fileName(a, url) {
   return name.replace(/^\d{9,}-\d+-(?=.)/, '');
 }
 
-/** Finds the PDFs in one post and adds the View buttons. Safe to run on every redraw. */
+/** Finds the documents in one post and adds the View buttons. Safe to run on every redraw. */
 function enhance(post) {
   const mode = app.forum.attribute('lecternMode');
   const body = post.element?.querySelector('.Post-body');
@@ -60,6 +69,8 @@ function enhance(post) {
 
   const add = (el, source, place) => {
     el.dataset.lectern = '1';
+    source.kind = kindOf(source.name);
+    if (!source.kind) return;
     const name = source.name;
     const b = button(place.className, t('view_file', { name }), place.text ? t('view') : '');
     b.addEventListener('click', (e) => {
@@ -73,6 +84,8 @@ function enhance(post) {
 
   // Lectern's own FoF Upload template.
   body.querySelectorAll('.LecternCard[data-lectern-uuid]:not([data-lectern])').forEach((card) => {
+    // Marked first: the count below must be added once, View or not.
+    card.dataset.lectern = '1';
     const download = card.querySelector('.LecternCard-download');
     if (download) {
       download.setAttribute('role', 'button');
@@ -85,10 +98,18 @@ function enhance(post) {
         }
       });
     }
+    const name = card.querySelector('.LecternCard-name')?.textContent.trim() || '';
+    const kind = KINDS[(/\.([a-z0-9]+)$/i.exec(name) || [])[1]?.toLowerCase()];
+    card.querySelector('.LecternCard-icon i')?.classList.replace('fa-file', ICONS[kind] || 'fa-file');
+    if (kind) card.classList.add('LecternCard--' + kind);
+    const meta = card.querySelector('.LecternCard-meta');
+    const { lecternPages: pages, lecternSheets: sheets } = card.dataset;
+    if (meta && (pages || sheets))
+      meta.textContent += ' · ' + (pages ? t('pages', { count: Number(pages) }) : t('sheets', { count: Number(sheets) }));
     if (!canDownload) return;
     add(
       card,
-      { url: fofUrl(card.dataset.lecternUuid), name: card.querySelector('.LecternCard-name')?.textContent || 'PDF' },
+      { url: fofUrl(card.dataset.lecternUuid), name },
       {
         className: 'Button--primary LecternCard-view',
         text: true,
@@ -98,11 +119,10 @@ function enhance(post) {
     );
   });
 
-  // FoF Upload's plain "file" template, for PDFs posted before this template.
+  // FoF Upload's plain "file" template, for files posted before this template.
   if (canDownload) {
     body.querySelectorAll('.ButtonGroup[data-fof-upload-download-uuid]:not([data-lectern])').forEach((group) => {
       const name = group.querySelector('.fof-upload-download-label')?.textContent.trim() || '';
-      if (!/\.pdf$/i.test(name)) return;
       add(
         group,
         { url: fofUrl(group.dataset.fofUploadDownloadUuid), name },
@@ -116,9 +136,9 @@ function enhance(post) {
     });
   }
 
-  // Plain links to a PDF on this forum, from any editor.
+  // Plain links to a document on this forum, from any editor.
   body.querySelectorAll('a[href]:not([data-lectern])').forEach((a) => {
-    const url = samePdf(a.getAttribute('href'));
+    const url = sameOrigin(a.getAttribute('href'));
     if (!url || a.closest('.LecternCard, .Lectern, [data-fof-upload-download-uuid]')) return;
     // FoF Upload's own files follow its download permission, even as links.
     if (!canDownload && app.forum.attribute('fof-upload.canDownload') !== undefined && url.pathname.includes('/assets/files/')) return;

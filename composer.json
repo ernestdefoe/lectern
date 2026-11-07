@@ -1,10 +1,12 @@
 {
     "name": "ernestdefoe/lectern",
-    "description": "Lectern — read PDF attachments right inside the post, with page thumbnails, search, zoom, print and full screen. Works with FoF Upload and plain links, in any editor. The viewer loads only when someone opens a PDF, and files never leave your forum.",
+    "description": "Lectern — read PDFs, Word documents and spreadsheets right inside the post: thumbnails, search, zoom, print and full screen for PDFs, pages for Word, sheets for Excel. Works with FoF Upload and plain links, in any editor. Viewers load only when someone opens a file, and files never leave your forum.",
     "keywords": [
         "flarum",
         "flarum-extension",
         "pdf",
+        "docx",
+        "xlsx",
         "viewer",
         "pdfjs",
         "attachments",

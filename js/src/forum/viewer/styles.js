@@ -26,6 +26,7 @@ html.Lectern-open { overflow: hidden; }
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px;
   padding: 6px 8px; background: var(--body-bg); border-bottom: 1px solid var(--control-bg);
 }
+.Lectern-toolbar, .Lectern-search, .Lectern-tabs { flex-shrink: 0; }
 .Lectern-group { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .Lectern-group:first-child { flex: 1 1 160px; }
 .Lectern .Lectern-button.Button { color: var(--control-color); background: transparent; width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -57,6 +58,24 @@ html.Lectern-open { overflow: hidden; }
 .Lectern-state p { margin: 0; }
 .Lectern-state .Button { margin-left: 8px; }
 
+.Lectern-docBody { position: relative; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; outline: none; }
+.Lectern-docBody--word { overflow: hidden; display: flex; }
+.Lectern-frame { flex: 1 1 auto; width: 100%; height: 100%; border: 0; display: block; background: var(--control-bg); }
+.Lectern-docBody .Lectern-state { position: absolute; inset: 0; }
+.Lectern-docIcon { font-size: 18px; color: var(--muted-color); padding: 0 4px 0 6px; }
+.Lectern-sheetHolder { display: inline-block; min-width: 100%; background: var(--body-bg); }
+.Lectern-sheet { border-collapse: collapse; font-size: 13px; color: var(--text-color); background: var(--body-bg); }
+.Lectern-sheet th, .Lectern-sheet td { border: 1px solid var(--control-bg); padding: 3px 8px; white-space: pre; max-width: 420px; overflow: hidden; text-overflow: ellipsis; vertical-align: top; text-align: left; }
+.Lectern-sheet td.is-number { text-align: right; font-variant-numeric: tabular-nums; }
+.Lectern-sheet thead th { position: sticky; top: 0; z-index: 1; background: var(--control-bg); color: var(--muted-color); font-weight: 600; text-align: center; }
+.Lectern-sheet tbody th { position: sticky; left: 0; background: var(--control-bg); color: var(--muted-color); font-weight: 600; text-align: right; }
+.Lectern-sheet .Lectern-corner { left: 0; z-index: 2; }
+.Lectern-tabs { display: flex; gap: 2px; overflow-x: auto; padding: 4px 8px 0; background: var(--body-bg); border-bottom: 1px solid var(--control-bg); }
+.Lectern-tab { flex-shrink: 0; border: 0; border-bottom: 2px solid transparent; background: none; padding: 6px 12px; font: inherit; color: var(--muted-color); cursor: pointer; white-space: nowrap; }
+.Lectern-tab[aria-selected="true"] { color: var(--text-color); border-bottom-color: var(--primary-color); font-weight: 600; }
+.Lectern-tab:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
+.Lectern-more { position: sticky; left: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; color: var(--muted-color); }
+@media print { .Lectern-print .Lectern-sheet { font-size: 10px; } .Lectern-print .Lectern-sheet th, .Lectern-print .Lectern-sheet td { max-width: none; position: static; } }
 .Lectern-thumbs {
   flex: 0 0 140px; overflow-y: auto; overscroll-behavior: contain; padding: 10px; background: var(--body-bg);
   border-right: 1px solid var(--control-bg); display: flex; flex-direction: column; gap: 10px;

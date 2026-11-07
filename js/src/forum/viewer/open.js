@@ -1,4 +1,5 @@
 import Viewer from './Viewer';
+import DocViewer from './DocViewer';
 import styles from './styles';
 
 function addStyles() {
@@ -10,14 +11,14 @@ function addStyles() {
 }
 
 /**
- * Opens a PDF, in the post under `after` or, without it, full screen in a
+ * Opens a document, in the post under `after` or, without it, full screen in a
  * native <dialog>. The dialog sits in the browser's top layer, above the
  * header, the Mobile Tab bar, the composer and cookie banners, and it keeps
  * focus inside until it closes.
  *
  * Returns { close, isConnected }.
  */
-export default function open({ url, name, trigger, after, keyboard, onClose }) {
+export default function open({ url, name, kind, trigger, after, keyboard, onClose }) {
   addStyles();
 
   const modal = !after;
@@ -54,14 +55,14 @@ export default function open({ url, name, trigger, after, keyboard, onClose }) {
     after.after(host);
   }
 
-  m.mount(host, { view: () => m(Viewer, { url, name, modal, keyboard, onclose: close }) });
+  m.mount(host, { view: () => m(kind === 'pdf' ? Viewer : DocViewer, { url, name, kind, modal, keyboard, onclose: close }) });
   if (!modal) trigger.setAttribute('aria-expanded', 'true');
 
   if (modal) {
     document.documentElement.classList.add('Lectern-open');
     host.showModal();
     // Keyboard users land on the pages; a tap focuses the viewer without a focus ring.
-    host.querySelector(keyboard ? '.Lectern-scroll' : '.Lectern')?.focus({ preventScroll: true });
+    host.querySelector(keyboard ? '.Lectern-scroll, .Lectern-frame' : '.Lectern')?.focus({ preventScroll: true });
   } else {
     host.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
