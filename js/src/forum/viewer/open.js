@@ -17,7 +17,7 @@ function addStyles() {
  *
  * Returns { close, isConnected }.
  */
-export default function open({ url, name, trigger, after, onClose }) {
+export default function open({ url, name, trigger, after, keyboard, onClose }) {
   addStyles();
 
   const modal = !after;
@@ -54,13 +54,14 @@ export default function open({ url, name, trigger, after, onClose }) {
     after.after(host);
   }
 
-  m.mount(host, { view: () => m(Viewer, { url, name, modal, onclose: close }) });
+  m.mount(host, { view: () => m(Viewer, { url, name, modal, keyboard, onclose: close }) });
   if (!modal) trigger.setAttribute('aria-expanded', 'true');
 
   if (modal) {
     document.documentElement.classList.add('Lectern-open');
     host.showModal();
-    host.querySelector('.Lectern-scroll')?.focus({ preventScroll: true });
+    // Keyboard users land on the pages; a tap focuses the viewer without a focus ring.
+    host.querySelector(keyboard ? '.Lectern-scroll' : '.Lectern')?.focus({ preventScroll: true });
   } else {
     host.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }

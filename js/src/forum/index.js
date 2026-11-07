@@ -65,7 +65,8 @@ function enhance(post) {
     b.addEventListener('click', (e) => {
       // Inside FoF Upload's button group, its download handler must not fire too.
       e.stopPropagation();
-      open(post, b, source, place.after);
+      // detail 0: activated from the keyboard, so focus goes straight to the pages.
+      open(post, b, source, place.after, e.detail === 0);
     });
     place.insert(b);
   };
@@ -134,7 +135,7 @@ function enhance(post) {
   });
 }
 
-function open(post, trigger, source, after) {
+function open(post, trigger, source, after, keyboard) {
   const viewers = post.lecternOpen || (post.lecternOpen = new Map());
   const current = viewers.get(trigger);
   if (current) return current.close();
@@ -146,6 +147,7 @@ function open(post, trigger, source, after) {
     .then(({ default: openViewer }) => {
       const handle = openViewer({
         ...source,
+        keyboard,
         trigger,
         after: inline ? after : null,
         onClose: () => viewers.delete(trigger),

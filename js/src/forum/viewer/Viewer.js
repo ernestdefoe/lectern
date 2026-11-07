@@ -86,7 +86,8 @@ export default class Viewer extends Component {
     this.observer = new IntersectionObserver((entries) => this.onIntersect(entries), { root: this.scroller, rootMargin: '300px 0px' });
     this.thumbObserver = new IntersectionObserver((entries) => this.onThumbIntersect(entries), { rootMargin: '200px 0px' });
 
-    this.scroller.focus({ preventScroll: true });
+    // A dialog can't take focus until it is open; open.js focuses that one.
+    if (!this.attrs.modal) (this.attrs.keyboard ? this.scroller : this.element).focus({ preventScroll: true });
   }
 
   onupdate(vnode) {
@@ -698,6 +699,7 @@ export default class Viewer extends Component {
       <div
         className={'Lectern' + (modal ? ' Lectern--modal' : ' Lectern--inline') + (this.thumbs && ready ? ' Lectern--thumbs' : '')}
         role="region"
+        tabindex="-1"
         aria-label={t('title', { name })}
         onkeydown={(e) => this.onkeydown(e)}
       >

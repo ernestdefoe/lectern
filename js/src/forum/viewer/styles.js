@@ -17,6 +17,7 @@ html.Lectern-open { overflow: hidden; }
   display: flex; flex-direction: column; min-width: 0; color: var(--text-color);
   background: var(--control-bg); font-size: 14px; line-height: 1.4;
 }
+.Lectern:focus { outline: none; }
 .Lectern--inline { height: min(80vh, 900px); border-radius: var(--border-radius, 4px); overflow: hidden; border: 1px solid var(--control-bg); }
 .Lectern--modal { height: 100%; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 .Lectern:fullscreen { height: 100%; }
