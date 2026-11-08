@@ -4,7 +4,8 @@ import CommentPost from 'flarum/forum/components/CommentPost';
 
 /*
  * This file is all a page without an open document pays for: it finds the
- * PDFs, Word files and spreadsheets in a post and gives each a View button.
+ * PDFs, Word files and spreadsheets in a post (or a wiki article) and gives
+ * each a View button.
  * The viewers and their libraries load on the first click.
  */
 
@@ -55,17 +56,28 @@ function fileName(a, url) {
   return name.replace(/^\d{9,}-\d+-(?=.)/, '');
 }
 
-/** Finds the documents in one post and adds the View buttons. Safe to run on every redraw. */
-function enhance(post) {
-  const mode = app.forum.attribute('lecternMode');
+/** Finds the documents in a post and adds the View buttons. Safe to run on every redraw. */
+function enhancePost(post) {
   const body = post.element?.querySelector('.Post-body');
-  if (!mode || !body) return;
+  if (!body) return;
 
   const model = post.attrs.post;
-  const discussion = model.discussion();
-  const canDownload = app.forum.attribute('fof-upload.canDownload') && discussion?.attribute('canDownloadFiles') !== false;
+  const canDownload = app.forum.attribute('fof-upload.canDownload') && model.discussion()?.attribute('canDownloadFiles') !== false;
+  enhance(post, body, canDownload, model.id());
+}
+
+/**
+ * Adds the View buttons to one block of formatted content. `host` is the
+ * component that owns it and keeps its open viewers. Without a post, FoF
+ * Upload's files go through its UUID-only route, which checks the same
+ * download permission (per tag too) against every discussion the file is in.
+ */
+function enhance(host, body, canDownload, postId) {
+  if (!app.forum.attribute('lecternMode')) return;
+
   const fofUrl = (uuid) =>
-    `${app.forum.attribute('apiUrl')}/fof/download/${encodeURIComponent(uuid)}/${encodeURIComponent(model.id())}/${encodeURIComponent(app.session.csrfToken)}`;
+    `${app.forum.attribute('apiUrl')}/fof/download/${encodeURIComponent(uuid)}` +
+    (postId ? `/${encodeURIComponent(postId)}/${encodeURIComponent(app.session.csrfToken)}` : '');
 
   const add = (el, source, place) => {
     el.dataset.lectern = '1';
@@ -77,7 +89,7 @@ function enhance(post) {
       // Inside FoF Upload's button group, its download handler must not fire too.
       e.stopPropagation();
       // detail 0: activated from the keyboard, so focus goes straight to the pages.
-      open(post, b, source, place.after, e.detail === 0);
+      open(host, b, source, place.after, e.detail === 0);
     });
     place.insert(b);
   };
@@ -155,8 +167,8 @@ function enhance(post) {
   });
 }
 
-function open(post, trigger, source, after, keyboard) {
-  const viewers = post.lecternOpen || (post.lecternOpen = new Map());
+function open(host, trigger, source, after, keyboard) {
+  const viewers = host.lecternOpen || (host.lecternOpen = new Map());
   const current = viewers.get(trigger);
   if (current) return current.close();
 
@@ -178,20 +190,36 @@ function open(post, trigger, source, after, keyboard) {
     .finally(() => trigger.removeAttribute('aria-busy'));
 }
 
-/** Closes the inline viewers of a post whose content was replaced or removed. */
-function prune(post, all) {
-  post.lecternOpen?.forEach((handle) => (all || !handle.isConnected()) && handle.close());
+/** Closes the inline viewers whose content was replaced or removed. */
+function prune(host, all) {
+  host.lecternOpen?.forEach((handle) => (all || !handle.isConnected()) && handle.close());
 }
 
 app.initializers.add('ernestdefoe-lectern', () => {
   extend(CommentPost.prototype, 'oncreate', function () {
-    enhance(this);
+    enhancePost(this);
   });
   extend(CommentPost.prototype, 'onupdate', function () {
     prune(this, false);
-    enhance(this);
+    enhancePost(this);
   });
   extend(CommentPost.prototype, 'onremove', function () {
+    prune(this, true);
+  });
+
+  // Link Robins Wiki: the article, its FAQ answers and its comments. Extended
+  // by module name, so nothing happens on forums without the wiki.
+  const wikiPage = 'ext:linkrobins/wiki/forum/components/WikiShowPage';
+  const enhanceWiki = (page) =>
+    page.element?.querySelectorAll('.Post-body').forEach((body) => enhance(page, body, app.forum.attribute('fof-upload.canDownload')));
+  extend(wikiPage, 'oncreate', function () {
+    enhanceWiki(this);
+  });
+  extend(wikiPage, 'onupdate', function () {
+    prune(this, false);
+    enhanceWiki(this);
+  });
+  extend(wikiPage, 'onremove', function () {
     prune(this, true);
   });
 });

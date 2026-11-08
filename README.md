@@ -11,6 +11,7 @@ A [Flarum](https://flarum.org) 2 extension that lets readers open PDFs, Word doc
 - **Spreadsheets (.xlsx, .xlsm, .xls, .ods, .csv)**: every sheet as a tab, with row and column headings that stay in view, merged cells, zoom, print and download.
 - **Works with FoF Upload**: every PDF, Word file and spreadsheet uploaded with [FoF Upload](https://github.com/FriendsOfFlarum/upload) gets a **View** button, including files posted before Lectern was installed. The new **Document card** template shows the file as a card with its name, size and page or sheet count.
 - **Works with plain links** to these files on your own forum, from any editor: Markdown, BBCode or a rich text editor.
+- **Works in [Link Robins Wiki](https://github.com/linkrobins/flarum-wiki)** articles, their FAQ answers and comments, as well as in posts.
 - **Phones**: pinch to zoom, swipe sideways to turn a PDF page, and a full-screen viewer that sits above the Mobile Tab bar. The back gesture closes it.
 - **Keyboard and screen readers**: every control is labelled, pages and search results are announced, and the keys you would expect work (Page Up/Down, arrows, Home/End, +, −, 0, Ctrl+F, Escape).
 
