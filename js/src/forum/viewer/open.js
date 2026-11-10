@@ -34,7 +34,6 @@ export default function open({ url, name, kind, trigger, after, keyboard, onClos
       document.documentElement.classList.remove('Lectern-open');
     }
     host.remove();
-    if (!modal) trigger.setAttribute('aria-expanded', 'false');
     if (trigger.isConnected) trigger.focus({ preventScroll: !modal });
     onClose();
   };
@@ -56,7 +55,6 @@ export default function open({ url, name, kind, trigger, after, keyboard, onClos
   }
 
   m.mount(host, { view: () => m(kind === 'pdf' ? Viewer : DocViewer, { url, name, kind, modal, keyboard, onclose: close }) });
-  if (!modal) trigger.setAttribute('aria-expanded', 'true');
 
   if (modal) {
     document.documentElement.classList.add('Lectern-open');

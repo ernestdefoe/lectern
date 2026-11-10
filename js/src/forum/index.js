@@ -20,19 +20,27 @@ function kindOf(name) {
 
 const t = (key, params) => app.translator.trans('ernestdefoe-lectern.forum.' + key, params, true);
 
-function button(className, label, text) {
+function button(className, name, text) {
   const el = document.createElement('button');
   el.type = 'button';
   el.className = 'Button hasIcon ' + className;
-  el.setAttribute('aria-label', label);
-  el.innerHTML = '<i class="icon fas fa-eye" aria-hidden="true"></i>';
+  el.innerHTML = '<i class="icon fas" aria-hidden="true"></i>';
   if (text) {
     const span = document.createElement('span');
     span.className = 'Button-label';
-    span.textContent = text;
     el.appendChild(span);
   }
+  setOpen(el, name, false);
   return el;
+}
+
+/** Shows whether this button's own viewer is open: View or Close, to the eye and to screen readers. */
+function setOpen(el, name, open, inline) {
+  el.firstChild.className = 'icon fas ' + (open ? 'fa-xmark' : 'fa-eye');
+  el.setAttribute('aria-label', t(open ? 'close_file' : 'view_file', { name }));
+  const label = el.querySelector('.Button-label');
+  if (label) label.textContent = t(open ? 'close' : 'view');
+  if (inline) el.setAttribute('aria-expanded', String(open));
 }
 
 /** A link to a document on this forum, or null. */
@@ -84,7 +92,7 @@ function enhance(host, body, canDownload, postId) {
     source.kind = kindOf(source.name);
     if (!source.kind) return;
     const name = source.name;
-    const b = button(place.className, t('view_file', { name }), place.text ? t('view') : '');
+    const b = button(place.className, name, place.text);
     b.addEventListener('click', (e) => {
       // Inside FoF Upload's button group, its download handler must not fire too.
       e.stopPropagation();
@@ -182,9 +190,13 @@ function open(host, trigger, source, after, keyboard) {
         keyboard,
         trigger,
         after: inline ? after : null,
-        onClose: () => viewers.delete(trigger),
+        onClose: () => {
+          viewers.delete(trigger);
+          setOpen(trigger, source.name, false, inline);
+        },
       });
       viewers.set(trigger, handle);
+      setOpen(trigger, source.name, true, inline);
     })
     .catch(() => window.open(source.url))
     .finally(() => trigger.removeAttribute('aria-busy'));
