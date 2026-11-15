@@ -2,6 +2,7 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import Icon from 'flarum/common/components/Icon';
 import { loadPdfjs, fetchFile, openDocument } from './pdfjs';
+import { renderLinks } from './links';
 
 const t = (key, params) => app.translator.trans('ernestdefoe-lectern.forum.' + key, params, true);
 
@@ -274,6 +275,10 @@ export default class Viewer extends Component {
     el.style.setProperty('--total-scale-factor', String(viewport.scale));
     inner.replaceChildren(canvas, text);
 
+    // Added once the annotations arrive, unless the page was redrawn meanwhile.
+    renderLinks({ page, doc: this.doc, viewport, t, onPage: (p) => this.goTo(p) })
+      .then((links) => links && this.rendered.get(n) === entry && inner.appendChild(links))
+      .catch(() => {});
     entry.textLayer = new this.lib.TextLayer({ textContentSource: page.streamTextContent(), container: text, viewport });
     await entry.textLayer.render();
     if (this.rendered.get(n) === entry) this.highlight(n);

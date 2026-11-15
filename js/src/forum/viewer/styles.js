@@ -106,6 +106,10 @@ html.Lectern-open { overflow: hidden; }
   .Lectern-group:last-child { margin-left: auto; }
 }
 
+.Lectern-links { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.Lectern-links a { position: absolute; pointer-events: auto; border-radius: 2px; }
+.Lectern-links a:hover { background: rgba(0, 100, 255, 0.12); }
+.Lectern-links a:focus-visible { outline: 2px solid var(--primary-color, #4d698e); outline-offset: 1px; }
 .textLayer {
   position: absolute; text-align: initial; inset: 0; overflow: clip; opacity: 1; line-height: 1; z-index: 0;
   -webkit-text-size-adjust: none; text-size-adjust: none; forced-color-adjust: none; transform-origin: 0 0; caret-color: CanvasText;
