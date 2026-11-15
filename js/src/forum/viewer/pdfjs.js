@@ -59,8 +59,12 @@ export async function fetchFile(url, signal, onProgress) {
  * Opens a document with everything that could run code turned off: no XFA
  * forms, no eval, and no annotation layer, so a PDF's scripts and actions are
  * never wired up. Fonts, CMaps and image decoders come from the forum itself.
+ *
+ * `safe` is for browsers that drew a page blank or without its text: fonts are
+ * drawn as shapes instead of loaded as web fonts, and pdf.js keeps to plain
+ * canvases and its own image decoding.
  */
-export function openDocument(lib, data) {
+export function openDocument(lib, data, safe = false) {
   const dir = base();
   return lib.getDocument({
     data,
@@ -71,5 +75,6 @@ export function openDocument(lib, data) {
     standardFontDataUrl: dir + 'standard_fonts/',
     wasmUrl: dir + 'wasm/',
     iccUrl: dir + 'iccs/',
+    ...(safe && { disableFontFace: true, useSystemFonts: false, isOffscreenCanvasSupported: false, isImageDecoderSupported: false }),
   });
 }

@@ -96,6 +96,8 @@ html.Lectern-open { overflow: hidden; }
 }
 .Lectern .Lectern-button.Lectern-close--narrow { display: none; }
 .Lectern-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.Lectern-trouble { flex: none; margin: 0; padding: 8px 12px; border-top: 1px solid var(--control-bg); background: var(--body-bg); color: var(--text-color); font-size: 13px; text-align: center; overflow-wrap: anywhere; }
+html:not(#x-hi) .Lectern-trouble a { color: var(--primary-color); font-weight: 600; text-decoration: underline; }
 
 @media (max-width: 719px) {
   .Lectern-thumbs { position: absolute; inset: 0 auto 0 0; z-index: 2; box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3); }

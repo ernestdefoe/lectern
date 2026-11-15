@@ -3,6 +3,7 @@ import Component from 'flarum/common/Component';
 import Icon from 'flarum/common/components/Icon';
 import { loadPdfjs, fetchFile, openDocument } from './pdfjs';
 import { renderLinks } from './links';
+import { sample, hasInk, looksBroken, textBoxes, paintsSomething } from './health';
 
 const t = (key, params) => app.translator.trans('ernestdefoe-lectern.forum.' + key, params, true);
 
@@ -12,6 +13,8 @@ const MAX_ZOOM = 5;
 const GAP = 12;
 // iOS refuses canvases above ~16.7 megapixels; stay well under it per page.
 const MAX_CANVAS_PIXELS = 8 * 1024 * 1024;
+// Safe mode draws on the CPU at one canvas pixel per CSS pixel, and smaller still.
+const SAFE_CANVAS_PIXELS = 4 * 1024 * 1024;
 // Pages kept drawn at once; the rest are dropped to bound memory on long files.
 const KEEP_RENDERED = 10;
 
@@ -51,6 +54,10 @@ export default class Viewer extends Component {
     this.printing = null;
     this.fullscreen = false;
     this.message = '';
+    // safe: a page came out blank or lost its text, so everything redraws the careful way.
+    // trouble: it still came out broken; the reader is offered the original.
+    this.safe = false;
+    this.trouble = false;
 
     this.rendered = new Map();
     this.visible = new Set();
@@ -247,9 +254,13 @@ export default class Viewer extends Component {
     const el = this.pageEl(n);
     if (!el) return;
 
-    const page = await this.doc.getPage(n);
+    const doc = this.doc;
+    const page = await doc.getPage(n);
     const viewport = page.getViewport({ scale: zoom * CSS_UNITS });
-    const ratio = Math.min(window.devicePixelRatio || 1, Math.sqrt(MAX_CANVAS_PIXELS / (viewport.width * viewport.height)));
+    const area = viewport.width * viewport.height;
+    const ratio = this.safe
+      ? Math.min(1, Math.sqrt(SAFE_CANVAS_PIXELS / area))
+      : Math.min(window.devicePixelRatio || 1, Math.sqrt(MAX_CANVAS_PIXELS / area));
 
     const canvas = document.createElement('canvas');
     canvas.width = Math.floor(viewport.width * ratio);
@@ -261,12 +272,17 @@ export default class Viewer extends Component {
     const entry = { zoom, task: null, textLayer: null };
     this.rendered.set(n, entry);
 
-    entry.task = page.render({
-      canvasContext: canvas.getContext('2d'),
-      viewport,
-      transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null,
-    });
-    await entry.task.promise;
+    try {
+      entry.task = page.render({
+        canvasContext: this.context(canvas),
+        viewport,
+        transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null,
+      });
+      await entry.task.promise;
+    } catch (error) {
+      if (error?.name !== 'RenderingCancelledException') this.failed(doc);
+      return;
+    }
     if (this.rendered.get(n) !== entry) return;
 
     const text = document.createElement('div');
@@ -280,8 +296,73 @@ export default class Viewer extends Component {
       .then((links) => links && this.rendered.get(n) === entry && inner.appendChild(links))
       .catch(() => {});
     entry.textLayer = new this.lib.TextLayer({ textContentSource: page.streamTextContent(), container: text, viewport });
-    await entry.textLayer.render();
-    if (this.rendered.get(n) === entry) this.highlight(n);
+    await entry.textLayer.render().catch(() => {});
+    if (this.rendered.get(n) !== entry) return;
+    this.highlight(n);
+    if (!this.trouble && doc === this.doc && (await this.broken(page, canvas, text, entry.textLayer))) this.failed(doc);
+  }
+
+  /** A 2D context; safe mode asks for one the browser keeps on the CPU. */
+  context(canvas) {
+    return canvas.getContext('2d', this.safe ? { willReadFrequently: true } : undefined);
+  }
+
+  /** Whether a drawn page came out blank, or with most of its text missing, although it has something to show. */
+  async broken(page, canvas, container, textLayer) {
+    const img = sample(canvas, this.safe);
+    if (!img) return false;
+    const boxes = container && textLayer ? textBoxes(container, textLayer.textDivs, textLayer.textContentItemsStr) : [];
+    if (looksBroken(img, boxes)) return true;
+    // A blank page with no text may still have pictures; only then is the page's drawing list asked for.
+    return !boxes.length && !hasInk(img) && paintsSomething(this.lib, page).catch(() => false);
+  }
+
+  /**
+   * A page of `doc` came out broken: redraw everything in safe mode once, and when
+   * the safe copy breaks too, offer the original. Pages of a replaced copy don't count.
+   */
+  failed(doc) {
+    if (doc !== this.doc) return;
+    if (!this.safe) return this.enterSafeMode();
+    if (doc !== this.safeDoc || this.trouble) return;
+    this.trouble = true;
+    this.say(t('trouble'));
+  }
+
+  /**
+   * Reopens the document with fonts drawn as shapes and no off-screen canvases or
+   * image decoders, then redraws the pages and thumbnails in view over the old ones.
+   */
+  async enterSafeMode() {
+    this.safe = true;
+    try {
+      const bytes = new Uint8Array(await (await fetch(this.blobUrl)).arrayBuffer());
+      const task = openDocument(this.lib, bytes, true);
+      const doc = await task.promise;
+      if (this.abort.signal.aborted) return task.destroy();
+
+      const old = this.loadingTask;
+      this.loadingTask = task;
+      this.doc = this.safeDoc = doc;
+      this.texts.clear();
+      this.rendered.forEach((r, n) => {
+        r.task?.cancel();
+        if (this.visible.has(n)) r.zoom = null;
+        else this.drop(n);
+      });
+      this.element.querySelectorAll('.Lectern-thumb[data-observed]').forEach((el) => {
+        this.thumbObserver.unobserve(el);
+        this.thumbObserver.observe(el);
+      });
+      this.drawVisible();
+      old?.destroy();
+    } catch {
+      // The safe copy wouldn't open: no third try, just the original.
+      if (!this.abort.signal.aborted) {
+        this.trouble = true;
+        this.say(t('trouble'));
+      }
+    }
   }
 
   // ------------------------------------------------------------ navigating
@@ -665,16 +746,24 @@ export default class Viewer extends Component {
         box.textContent = '';
         return;
       }
-      if (box.firstChild) return;
+      // A thumbnail drawn from the document before safe mode is redrawn over in place.
+      const doc = this.doc;
+      if (box.firstChild?.lecternDoc === doc) return;
       const n = Number(e.target.dataset.page);
-      const page = await this.doc.getPage(n);
-      const base = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: (96 * (window.devicePixelRatio || 1)) / base.width });
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.floor(viewport.width);
-      canvas.height = Math.floor(viewport.height);
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise.catch(() => {});
-      if (!box.firstChild && box.isConnected) box.append(canvas);
+      try {
+        const page = await doc.getPage(n);
+        const base = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: (96 * (this.safe ? 1 : window.devicePixelRatio || 1)) / base.width });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        canvas.lecternDoc = doc;
+        await page.render({ canvasContext: this.context(canvas), viewport }).promise;
+        if (box.firstChild?.lecternDoc !== doc && box.isConnected && doc === this.doc) box.replaceChildren(canvas);
+        if (!this.safe && !this.trouble && (await this.broken(page, canvas))) this.failed(doc);
+      } catch (error) {
+        if (error?.name !== 'RenderingCancelledException' && !this.abort.signal.aborted) this.failed(doc);
+      }
     });
   }
 
@@ -869,6 +958,19 @@ export default class Viewer extends Component {
             )}
           </div>
         </div>
+
+        {this.trouble ? (
+          <p className="Lectern-trouble">
+            {t('trouble')}{' '}
+            <a href={this.blobUrl || this.attrs.url} target="_blank" rel="noopener noreferrer">
+              {t('open_original')}
+            </a>
+            <span aria-hidden="true"> · </span>
+            <a href={this.blobUrl || this.attrs.url} download={name}>
+              {t('download')}
+            </a>
+          </p>
+        ) : null}
 
         {this.printing ? (
           <div className="Lectern-printing" role="status">
